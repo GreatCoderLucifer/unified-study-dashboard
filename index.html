@@ -532,7 +532,7 @@
             <h1>Study & Goal Dashboard</h1>
             <div class="header-info">
                 <div>Target: May 3, 2026</div>
-                <div>Monthly Goal: <strong id="headerGoal">360h</strong></div>
+                <div>Monthly Goal: <strong id="headerGoal">420h</strong></div>
             </div>
         </div>
 
@@ -649,14 +649,14 @@
                 <h2 class="section-title">Monthly Goal</h2>
                 
                 <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 0.85rem; color: #6c757d; margin-bottom: 20px;">
-                    Goal formula: 12 hours × Days in month
+                    Goal formula: 14 hours × Days in month
                 </div>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Monthly Goal</div>
-                        <div class="stat-value" id="monthlyGoal">360h</div>
-                        <div class="stat-sublabel" id="goalDetails">(12 × days)</div>
+                        <div class="stat-value" id="monthlyGoal">420h</div>
+                        <div class="stat-sublabel" id="goalDetails">(14 × days)</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Time Studied</div>
@@ -665,7 +665,7 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Remaining</div>
-                        <div class="stat-value" id="remainingTime">360.0h</div>
+                        <div class="stat-value" id="remainingTime">420.0h</div>
                         <div class="stat-sublabel">Left this month</div>
                     </div>
                 </div>
@@ -812,24 +812,28 @@
             }
             
             startTimers() {
-                setInterval(() => this.updateMainCountdown(), 1000);
-                setInterval(() => this.updatePhaseTimers(), 60000);
-                this.updatePhaseTimers();
-                setInterval(() => this.updateDayTimer(), 1000);
-                setInterval(() => this.updateMonthlyStats(), 60000);
+                // Update all timers immediately first
+                this.updateAllTimers();
+                
+                // Then set up intervals
+                setInterval(() => {
+                    this.updateAllTimers();
+                }, 1000);
+                
+                setInterval(() => {
+                    this.updatePhaseTimers();
+                    this.updateMonthlyStats();
+                }, 60000);
             }
             
-            updateAll() {
-                this.updateMainCountdown();
-                this.updatePhaseTimers();
-                this.updateDayTimer();
-                this.updateMonthlyStats();
-                this.updateTimerDisplay();
-            }
-            
-            updateMainCountdown() {
+            updateAllTimers() {
                 const now = new Date();
-                const diff = this.TARGET_DATE - now;
+                this.updateMainCountdown(now);
+                this.updateDayTimer(now);
+            }
+            
+            updateMainCountdown(currentTime = new Date()) {
+                const diff = this.TARGET_DATE - currentTime;
                 
                 if (diff <= 0) {
                     this.elements.mainMonths.textContent = '00';
@@ -852,9 +856,18 @@
                 this.elements.mainMinutes.textContent = minutes.toString().padStart(2, '0');
                 this.elements.mainSeconds.textContent = seconds.toString().padStart(2, '0');
                 
-                const monthProgress = this.calculateMonthProgress(now);
+                const monthProgress = this.calculateMonthProgress(currentTime);
                 this.elements.monthProgress.textContent = `${monthProgress.toFixed(1)}%`;
                 this.elements.monthProgressFill.style.width = `${monthProgress}%`;
+            }
+            
+            updateAll() {
+                const now = new Date();
+                this.updateMainCountdown(now);
+                this.updatePhaseTimers();
+                this.updateDayTimer(now);
+                this.updateMonthlyStats();
+                this.updateTimerDisplay();
             }
             
             calculateMonthProgress(currentDate) {
@@ -892,11 +905,10 @@
                 container.innerHTML = `<span class="phase-days">${days}</span>d : <span class="phase-hours">${hours}</span>h : <span class="phase-minutes">${minutes}</span>m`;
             }
             
-            updateDayTimer() {
-                const now = new Date();
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-                const currentSecond = now.getSeconds();
+            updateDayTimer(currentTime = new Date()) {
+                const currentHour = currentTime.getHours();
+                const currentMinute = currentTime.getMinutes();
+                const currentSecond = currentTime.getSeconds();
                 
                 const startHour = 4;
                 const endHour = 24;
@@ -929,7 +941,7 @@
             getMonthlyGoal() {
                 const now = new Date();
                 const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                return daysInMonth * 12;
+                return daysInMonth * 14;
             }
             
             getRemainingDays() {
@@ -945,12 +957,12 @@
                 const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
                 const currentDay = now.getDate();
                 const remainingDays = this.getRemainingDays();
-                const maxPossibleHours = remainingDays * 12;
+                const maxPossibleHours = remainingDays * 14;
                 const remainingRequired = Math.max(0, monthlyGoal - this.studiedHours);
                 
                 this.elements.headerGoal.textContent = `${monthlyGoal}h`;
                 this.elements.monthlyGoal.textContent = `${monthlyGoal}h`;
-                this.elements.goalDetails.textContent = `(12 × ${daysInMonth} days)`;
+                this.elements.goalDetails.textContent = `(14 × ${daysInMonth} days)`;
                 this.elements.timeStudied.textContent = `${this.studiedHours.toFixed(1)}h`;
                 this.elements.remainingTime.textContent = `${remainingRequired.toFixed(1)}h`;
                 this.elements.bonusHours.textContent = `${this.bonusHours.toFixed(1)}h`;
@@ -960,7 +972,7 @@
                 
                 if (maxPossibleHours < remainingRequired && remainingRequired > 0) {
                     this.elements.warningMessage.innerHTML = 
-                        `<div class="warning">⚠️ Monthly goal no longer achievable. Max: ${maxPossibleHours}h (${remainingDays} days × 12)</div>`;
+                        `<div class="warning">⚠️ Monthly goal no longer achievable. Max: ${maxPossibleHours}h (${remainingDays} days × 14)</div>`;
                 } else if (remainingRequired <= 0) {
                     this.elements.warningMessage.innerHTML = 
                         `<div class="success-msg">🎉 Monthly goal achieved! All additional time goes to bonus hours.</div>`;
